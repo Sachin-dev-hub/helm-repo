@@ -1,13 +1,11 @@
 I've prepared a reusable step-by-step reference document covering the complete Helm repository workflow, from creating charts locally to publishing on GitHub and deploying them on a Kubernetes cluster.
 
-Writing
-
-
 Helm Chart Repository – Complete Setup and Deployment Guide
+---------------------------------------------------------------
 Purpose: Create Helm charts, package them, publish them to GitHub using GitHub Pages, and install them on a Kubernetes cluster.
 
 Example project: Payment and Shipping microservices
-
+---------------------------------------------------
 GitHub repository: https://github.com/Sachin-dev-hub/helm-repo
 
 Helm repository URL: https://sachin-dev-hub.github.io/helm-repo/
