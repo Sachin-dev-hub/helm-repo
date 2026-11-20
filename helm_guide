@@ -199,6 +199,7 @@ Copy the packaged charts:
 
 
 bash
+mkdir -p /root/helm-project
 cp /root/helm-project/payment-0.1.0.tgz .
 cp /root/helm-project/shipping-0.1.0.tgz .
 Expected structure:
@@ -249,7 +250,7 @@ Configure Git identity (first time only):
 
 
 bash
-git config --global user.name "Sachin Maskar"
+git config --global user.name "S-d==ev-hub"
 git config --global user.email "YOUR_GITHUB_EMAIL"
 Check the remote:
 
@@ -338,9 +339,9 @@ Expected:
 text
 NAME     URL
 myrepo   https://sachin-dev-hub.github.io/helm-repo/
+
 12. Search Available Helm Charts
 Run:
-
 
 bash
 helm search repo myrepo
