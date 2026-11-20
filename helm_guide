@@ -1,0 +1,655 @@
+I've prepared a reusable step-by-step reference document covering the complete Helm repository workflow, from creating charts locally to publishing on GitHub and deploying them on a Kubernetes cluster.
+
+Writing
+
+
+Helm Chart Repository – Complete Setup and Deployment Guide
+Purpose: Create Helm charts, package them, publish them to GitHub using GitHub Pages, and install them on a Kubernetes cluster.
+
+Example project: Payment and Shipping microservices
+
+GitHub repository: https://github.com/Sachin-dev-hub/helm-repo
+
+Helm repository URL: https://sachin-dev-hub.github.io/helm-repo/
+
+1. Architecture and Workflow
+The complete workflow:
+
+Create Helm charts on your local machine.
+Package charts into .tgz files.
+Create a GitHub repository.
+Upload chart packages and index.yaml.
+Enable GitHub Pages.
+Add the GitHub Pages URL to Helm on the Kubernetes machine.
+Search and download charts.
+Install applications on Kubernetes.
+Verify deployments and pods.
+2. Create Helm Chart Project
+Create the project directory:
+
+
+bash
+mkdir helm-project
+cd helm-project
+Create two Helm charts:
+
+
+bash
+mkdir -p payment/templates
+mkdir -p shipping/templates
+Expected directory structure:
+
+
+text
+helm-project/
+│
+├── payment/
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+│       └── deployment.yaml
+│
+└── shipping/
+    ├── Chart.yaml
+    ├── values.yaml
+    └── templates/
+        └── deployment.yaml
+3. Create Payment Helm Chart
+File: payment/Chart.yaml
+
+yaml
+apiVersion: v2
+name: payment
+description: Helm chart for Payment Service
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+File: payment/values.yaml
+
+yaml
+image:
+  repository: busybox
+  tag: latest
+  pullPolicy: IfNotPresent
+
+appMessage: "Payments Service"
+File: payment/templates/deployment.yaml
+
+yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ['sh', '-c', 'echo {{ .Values.appMessage }}; sleep 3600']
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+4. Create Shipping Helm Chart
+File: shipping/Chart.yaml
+
+yaml
+apiVersion: v2
+name: shipping
+description: Helm chart for Shipping Service
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+File: shipping/values.yaml
+
+yaml
+image:
+  repository: busybox
+  tag: latest
+  pullPolicy: IfNotPresent
+
+appMessage: "Shipping Service"
+File: shipping/templates/deployment.yaml
+
+yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ['sh', '-c', 'echo {{ .Values.appMessage }}; sleep 3600']
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+5. Validate Helm Charts
+Run these commands from helm-project:
+
+
+bash
+helm lint payment
+helm lint shipping
+Expected:
+
+
+text
+1 chart(s) linted, 0 chart(s) failed
+Test template rendering:
+
+
+bash
+helm template payment-release ./payment
+helm template shipping-release ./shipping
+These commands generate Kubernetes YAML without installing anything.
+
+6. Package Helm Charts
+Package both charts:
+
+
+bash
+helm package payment
+helm package shipping
+Generated files:
+
+
+text
+payment-0.1.0.tgz
+shipping-0.1.0.tgz
+The .tgz files are the packaged Helm charts that will be published.
+
+7. Create GitHub Helm Repository
+Create a GitHub repository:
+
+
+text
+helm-repo
+Example:
+
+https://github.com/Sachin-dev-hub/helm-repo
+
+Clone it on your machine:
+
+
+bash
+cd /root
+
+git clone https://github.com/Sachin-dev-hub/helm-repo.git
+Enter the repository:
+
+
+bash
+cd helm-repo
+Copy the packaged charts:
+
+
+bash
+cp /root/helm-project/payment-0.1.0.tgz .
+cp /root/helm-project/shipping-0.1.0.tgz .
+Expected structure:
+
+
+text
+helm-repo/
+│
+├── payment-0.1.0.tgz
+├── shipping-0.1.0.tgz
+└── README.md
+8. Generate Helm Repository index.yaml
+This is an important step.
+
+Helm requires an index.yaml file to identify available charts and their download locations.
+
+Run:
+
+
+bash
+helm repo index . \
+  --url https://sachin-dev-hub.github.io/helm-repo/
+This generates:
+
+
+text
+helm-repo/
+├── index.yaml
+├── payment-0.1.0.tgz
+├── shipping-0.1.0.tgz
+└── README.md
+Check the generated index:
+
+
+bash
+cat index.yaml
+It should contain entries for:
+
+payment
+shipping
+The chart download URLs should point to GitHub Pages, for example:
+
+
+text
+https://sachin-dev-hub.github.io/helm-repo/payment-0.1.0.tgz
+9. Configure Git and Push to GitHub
+Configure Git identity (first time only):
+
+
+bash
+git config --global user.name "Sachin Maskar"
+git config --global user.email "YOUR_GITHUB_EMAIL"
+Check the remote:
+
+
+bash
+git remote -v
+Expected:
+
+
+text
+origin https://github.com/Sachin-dev-hub/helm-repo.git
+Stage files:
+
+
+bash
+git add .
+Commit:
+
+
+bash
+git commit -m "Add payment and shipping Helm charts"
+Push:
+
+
+bash
+git push origin main
+Authentication note: GitHub HTTPS authentication requires a Personal Access Token or another supported authentication method, not your normal GitHub account password.
+
+10. Enable GitHub Pages
+Open:
+
+https://github.com/Sachin-dev-hub/helm-repo
+
+Follow these steps:
+
+Open Settings.
+Select Pages.
+Under Build and deployment, choose Deploy from a branch.
+Select branch main.
+Select folder / (root).
+Click Save.
+GitHub Pages will publish your Helm repository.
+
+Your repository URL becomes:
+
+
+text
+https://sachin-dev-hub.github.io/helm-repo/
+Verify the index:
+
+
+bash
+curl -I https://sachin-dev-hub.github.io/helm-repo/index.yaml
+Expected HTTP status:
+
+
+text
+200 OK
+11. Add Helm Repository on Kubernetes Machine
+Switch to your Kubernetes lab machine.
+
+Add the Helm repository:
+
+
+bash
+helm repo add myrepo \
+https://sachin-dev-hub.github.io/helm-repo/
+Expected:
+
+
+text
+"myrepo" has been added to your repositories
+Update repository:
+
+
+bash
+helm repo update
+List repositories:
+
+
+bash
+helm repo list
+Expected:
+
+
+text
+NAME     URL
+myrepo   https://sachin-dev-hub.github.io/helm-repo/
+12. Search Available Helm Charts
+Run:
+
+
+bash
+helm search repo myrepo
+Expected:
+
+
+text
+NAME             CHART VERSION   APP VERSION
+myrepo/payment   0.1.0           1.0.0
+myrepo/shipping  0.1.0           1.0.0
+You can also search all versions:
+
+
+bash
+helm search repo myrepo --versions
+13. Install Helm Charts on Kubernetes
+Install Payment:
+
+
+bash
+helm install payment-release myrepo/payment
+Install Shipping:
+
+
+bash
+helm install shipping-release myrepo/shipping
+Check installation:
+
+
+bash
+helm list -A
+Expected releases:
+
+
+text
+payment-release
+shipping-release
+14. Verify Kubernetes Deployments
+Check deployments:
+
+
+bash
+kubectl get deployments
+Expected:
+
+
+text
+NAME                        READY   UP-TO-DATE   AVAILABLE
+payment-release-payment     1/1     1            1
+shipping-release-shipping   1/1     1            1
+Check pods:
+
+
+bash
+kubectl get pods
+Check application logs:
+
+
+bash
+kubectl logs deployment/payment-release-payment
+Expected:
+
+
+text
+Payments Service
+Shipping:
+
+
+bash
+kubectl logs deployment/shipping-release-shipping
+Expected:
+
+
+text
+Shipping Service
+Note: These example BusyBox containers print their messages and sleep for 3600 seconds. They are not HTTP servers.
+
+15. Important Helm Commands
+
+Purpose	Command
+List Helm repositories	helm repo list
+Update repositories	helm repo update
+Search charts	helm search repo myrepo
+List releases	helm list -A
+Check release	helm status payment-release
+View chart values	helm get values payment-release
+View deployed manifest	helm get manifest payment-release
+Upgrade release	helm upgrade payment-release myrepo/payment
+Rollback release	helm rollback payment-release 1
+Uninstall release	helm uninstall payment-release
+Validate chart	helm lint payment
+Render templates	helm template payment-release ./payment
+Package chart	helm package payment
+16. How to Publish a New Chart Version
+Whenever you modify a chart, follow this process.
+
+Step 1: Update Chart.yaml
+For example:
+
+
+yaml
+version: 0.1.1
+Increase the chart version whenever you publish a new chart package.
+
+Step 2: Validate
+
+bash
+helm lint payment
+helm lint shipping
+Step 3: Package
+
+bash
+helm package payment
+helm package shipping
+Step 4: Copy new packages into GitHub repository
+
+bash
+cp payment-0.1.1.tgz /root/helm-repo/
+cp shipping-0.1.1.tgz /root/helm-repo/
+Run these commands from the appropriate directory or use absolute paths.
+
+Step 5: Regenerate index.yaml
+Inside helm-repo:
+
+
+bash
+helm repo index . \
+  --url https://sachin-dev-hub.github.io/helm-repo/
+Step 6: Push updated repository
+
+bash
+git add .
+git commit -m "Release Helm charts version 0.1.1"
+git push origin main
+Step 7: Update Kubernetes Helm repository
+
+bash
+helm repo update
+helm search repo myrepo --versions
+Step 8: Upgrade installed applications
+
+bash
+helm upgrade payment-release myrepo/payment
+helm upgrade shipping-release myrepo/shipping
+If necessary, specify a particular version:
+
+
+bash
+helm upgrade payment-release myrepo/payment --version 0.1.1
+17. Troubleshooting
+Problem 1: Helm repository returns 404
+Incorrect:
+
+
+bash
+helm repo add myrepo https://github.com/Sachin-dev-hub/helm-repo.git
+Correct:
+
+
+bash
+helm repo add myrepo https://sachin-dev-hub.github.io/helm-repo/
+Check:
+
+
+bash
+curl -I https://sachin-dev-hub.github.io/helm-repo/index.yaml
+Problem 2: No repositories found
+Error:
+
+
+text
+Error: no repositories found.
+Solution:
+
+
+bash
+helm repo add myrepo https://sachin-dev-hub.github.io/helm-repo/
+helm repo update
+Problem 3: Chart is not showing in search
+Check:
+
+
+bash
+cat index.yaml
+helm repo update
+helm search repo myrepo
+Make sure the chart package exists and index.yaml includes the chart.
+
+Problem 4: Chart changes are not appearing
+Remember:
+
+Increase version in Chart.yaml.
+Package the chart again.
+Copy the new package to GitHub repository.
+Regenerate index.yaml.
+Commit and push.
+Wait for GitHub Pages to publish.
+Run helm repo update.
+Problem 5: Git says Author identity unknown
+Configure:
+
+
+bash
+git config --global user.name "Sachin Maskar"
+git config --global user.email "YOUR_GITHUB_EMAIL"
+Then commit again.
+
+18. Complete Command Reference – Quick Execution
+This is the short workflow to follow whenever you create or publish Helm charts.
+
+LOCAL MACHINE – Create and package
+
+
+bash
+helm lint payment
+helm lint shipping
+
+helm package payment
+helm package shipping
+GITHUB REPOSITORY – Publish
+
+
+bash
+cd /root/helm-repo
+
+cp /root/helm-project/payment-0.1.0.tgz .
+cp /root/helm-project/shipping-0.1.0.tgz .
+
+helm repo index . \
+  --url https://sachin-dev-hub.github.io/helm-repo/
+
+git add .
+git commit -m "Publish Helm charts"
+git push origin main
+KUBERNETES MACHINE – Pull and install
+
+
+bash
+helm repo add myrepo \
+https://sachin-dev-hub.github.io/helm-repo/
+
+helm repo update
+
+helm search repo myrepo
+
+helm install payment-release myrepo/payment
+
+helm install shipping-release myrepo/shipping
+VERIFY
+
+
+bash
+helm list -A
+
+kubectl get deployments
+
+kubectl get pods
+
+kubectl get svc
+19. Final Architecture
+
+text
+                LOCAL MACHINE
+                      |
+                      |
+              Create Helm Charts
+                      |
+                      |
+                helm package
+                      |
+                      v
+              payment-0.1.0.tgz
+              shipping-0.1.0.tgz
+                      |
+                      |
+                      v
+                GITHUB REPO
+                  helm-repo
+                      |
+              +-------+-------+
+              |       |       |
+          index.yaml payment  shipping
+                      |
+                      |
+                      v
+                 GITHUB PAGES
+                      |
+                      |
+             Helm Repository URL
+                      |
+                      v
+              KUBERNETES CLUSTER
+                      |
+                 helm repo add
+                      |
+                helm repo update
+                      |
+                helm search repo
+                      |
+              +-------+-------+
+              |               |
+          Payment          Shipping
+          Release          Release
+              |               |
+          Deployment       Deployment
+              |               |
+             Pod             Pod
+Key takeaway: GitHub stores and publishes your Helm charts, GitHub Pages serves the Helm repository, and your Kubernetes machine uses Helm to retrieve and install those charts.
+
+You can keep this document as your Helm repository runbook and reuse the command reference whenever you publish new charts.
